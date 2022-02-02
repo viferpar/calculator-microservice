@@ -1,0 +1,20 @@
+cache:
+  paths:
+    - $M2_REPOSITORY
+    - $TARGET
+
+stages:
+  - compile
+  - test
+
+Compile:
+  image: maven:3.8.4-openjdk-11-slim
+  stage: compile
+  script:
+    - "mvn compile"
+
+Test:
+  image: maven:3.8.4-openjdk-11-slim
+  stage: test
+  script:
+    - "mvn test"
