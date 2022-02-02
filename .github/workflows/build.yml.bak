@@ -1,0 +1,53 @@
+name: Build
+
+on: [push]
+        
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+#    strategy:
+#      matrix: 
+#        os: [ubuntu-latest, windows-latest, macOS-latest]
+#        maven-versions: ['3.8.4', '3.6.3']
+
+#    name: ${{ matrix.os }} MVN ${{ matrix.maven-versions }}
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Hello Codelies!
+        run: echo "Hello!!!! from ${{ github.workflow }} triggered by the ${{ github.event_name }} done by ${{ github.actor }}"
+
+      - name: 😊 More and more
+        env:
+          JOB_CONTEXT: ${{ toJson(job) }}
+        run: |
+          echo "Job Context: $JOB_CONTEXT"
+          echo "Done!"
+          
+      - name: Greeting if Windows
+        if: matrix.os == 'windows-latest'
+        run: echo "Hey from Win2!"
+
+      - name: Run Postgres
+        run:  docker run -d --name="db" -p 5433:5433 -e POSTGRES_PASSWORD=test postgres:latest
+        
+      - name: Check DB is running
+        run: |
+          while ! docker exec db pg_isready; do
+              echo "Waiting for database connection..."
+              sleep 2
+          done
+      
+      - name: Compile
+        run: mvn package -DskipTests=true -T 1C
+        
+      - name: Run the tests
+        run: mvn test -Dparallel=all -DperCoreThreadCount=false -DthreadCount=16      

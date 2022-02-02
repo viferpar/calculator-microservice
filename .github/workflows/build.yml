@@ -1,0 +1,24 @@
+name: Build
+
+on: [push]
+        
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      
+      - name: Compile
+        run: mvn package -DskipTests=true -T 1C
+        
+      - name: Run the tests
+        run: mvn test -Dparallel=all -DperCoreThreadCount=false -DthreadCount=16      
